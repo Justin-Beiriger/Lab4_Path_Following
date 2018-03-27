@@ -8,7 +8,7 @@
 
 #include<ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include <my_path_action_server/path_messageAction.h>
+#include <my_action_server2/path_messageAction.h>
 #include <example_ros_service/PathSrv.h>
 #include <nav_msgs/Path.h>
 #include <std_msgs/Bool.h> // boolean message
@@ -21,8 +21,8 @@
 using namespace std;
 
 //some tunable constants, global
-const double g_move_speed = 1.0; // set forward speed to this value, e.g. 1m/s
-const double g_spin_speed = 1.0; // set yaw rate to this value, e.g. 1 rad/s
+const double g_move_speed = 0.3; // set forward speed to this value, e.g. 1m/s
+const double g_spin_speed = 0.3; // set yaw rate to this value, e.g. 1 rad/s
 const double g_sample_dt = 0.01;
 const double g_dist_tol = 0.01; // 1cm
 //global variables, including publisher and subscriber objects
@@ -39,12 +39,12 @@ private:
     // this class will own a "SimpleActionServer" called "as_".
     // it will communicate using messages defined in example_action_server/action/demo.action
     // the type "demoAction" is auto-generated from our name "demo" and generic name "Action"
-    actionlib::SimpleActionServer<my_path_action_server::path_messageAction> as_;
+    actionlib::SimpleActionServer<my_action_server2::path_messageAction> as_;
     
     // here are some message types to communicate with our client(s)
-    my_path_action_server::path_messageGoal goal_; // goal message, received from client
-    my_path_action_server::path_messageResult result_; // put results here, to be sent back to the client when done w/ goal
-    my_path_action_server::path_messageFeedback feedback_; // for feedback 
+    my_action_server2::path_messageGoal goal_; // goal message, received from client
+    my_action_server2::path_messageResult result_; // put results here, to be sent back to the client when done w/ goal
+    my_action_server2::path_messageFeedback feedback_; // for feedback 
     //  use: as_.publishFeedback(feedback_); to send incremental feedback to the client
     int countdown_val_;
 
@@ -55,7 +55,7 @@ public:
     ~MyPathActionServer(void) {
     }
     // Action Interface
-    void executeCB(const actionlib::SimpleActionServer<my_path_action_server::path_messageAction>::GoalConstPtr& goal);
+    void executeCB(const actionlib::SimpleActionServer<my_action_server2::path_messageAction>::GoalConstPtr& goal);
     
     // here are a few useful utility functions:
     double sgn(double x);
@@ -213,7 +213,7 @@ void do_inits(ros::NodeHandle &n) {
     g_current_pose.orientation.w = 1.0;
     
     // we declared g_twist_commander as global, but never set it up; do that now that we have a node handle
-    g_twist_commander = n.advertise<geometry_msgs::Twist>("/robot0/cmd_vel", 1);    
+    g_twist_commander = n.advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1);    
 }
 
 //executeCB implementation: this is a member method that will get registered with the action server
@@ -224,7 +224,7 @@ void do_inits(ros::NodeHandle &n) {
 // defined in our package, "example_action_server", in the subdirectory "action", called "demo.action"
 // The name "demo" is prepended to other message types created automatically during compilation.
 // e.g.,  "demoAction" is auto-generated from (our) base name "demo" and generic name "Action"
-void MyPathActionServer::executeCB(const actionlib::SimpleActionServer<my_path_action_server::path_messageAction>::GoalConstPtr& goal) {
+void MyPathActionServer::executeCB(const actionlib::SimpleActionServer<my_action_server2::path_messageAction>::GoalConstPtr& goal) {
     ROS_INFO("in executeCB");
     //do work here: this is where your interesting code goes
     ros::Rate timer(1.0); // 1Hz timer
