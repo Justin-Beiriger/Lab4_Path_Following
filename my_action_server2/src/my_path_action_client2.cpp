@@ -118,12 +118,13 @@ int main(int argc, char** argv) {
         
         // while the path is in progress, check for LIDAR alarm
         while (g_fdbk < npts) {
-            if (g_lidar_alarm) { //see if user wants to cancel current goal
+            if (g_lidar_alarm && !goal_cancelled) { //see if user wants to cancel current goal
                 ROS_INFO("LIDAR ALARM: cancelling goal");
                 action_client.cancelGoal(); //this is how one can cancel a goal in process
                 goal_cancelled = true;
             }
             if (!g_lidar_alarm && goal_cancelled) {
+                goal_cancelled = false;
                 action_client.sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
             }
         }
