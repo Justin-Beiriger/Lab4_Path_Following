@@ -44,8 +44,8 @@ void alarmCallBack(const std_msgs::Bool& alarm_msg)
 void doneCb(const actionlib::SimpleClientGoalState& state,
         const my_path_action_server::path_messageResultConstPtr& result) {
     ROS_INFO(" doneCb: server responded with state [%s]", state.toString().c_str());
-    //ROS_INFO("got result output = %d",result->output);
-    //g_result_output= result->output;
+    ROS_INFO("got result output = %d",result->output);
+    g_result_output= result->output;
     g_goal_active=false;
 }
 
@@ -89,10 +89,12 @@ int main(int argc, char** argv) {
         }
         ROS_INFO("connected to action server");  // if here, then we connected to the server;
         
+        
+        
         //create some path points...this should be done by some intelligent algorithm, but we'll hard-code it here
         geometry_msgs::PoseStamped pose_stamped;
         geometry_msgs::Pose pose;
-        pose.position.x = 3.0; // first desired x-coord is 3
+        pose.position.x = 2.0; // first desired x-coord is 2.0
         pose.position.y = 0.0;
         pose.position.z = 0.0; // let's hope so!
         geometry_msgs::Quaternion quat;
@@ -104,36 +106,27 @@ int main(int argc, char** argv) {
         // some more poses...
         quat = convertPlanarPhi2Quaternion(0); // get a quaternion corresponding to this heading
         pose_stamped.pose.orientation = quat;
-        pose_stamped.pose.position.y = 3.0; // desired y-coord is 3.0
-        goal.path.poses.push_back(pose_stamped);
-
-        quat = convertPlanarPhi2Quaternion(1.571);
-        pose_stamped.pose.orientation = quat;
-        pose_stamped.pose.position.x = 6.5; // desired x-coord is 6.5
-        goal.path.poses.push_back(pose_stamped);
-
-        quat = convertPlanarPhi2Quaternion(3.14159);
-        pose_stamped.pose.orientation = quat;
-        pose_stamped.pose.position.y = 5.2; // desired x-coord is 6.5
-        goal.path.poses.push_back(pose_stamped);
-
-        quat = convertPlanarPhi2Quaternion(1.571);
-        pose_stamped.pose.orientation = quat;
-        pose_stamped.pose.position.x = 3.0; // desired x-coord is 6.5
-        goal.path.poses.push_back(pose_stamped);
-
-        quat = convertPlanarPhi2Quaternion(3.14159);
-        pose_stamped.pose.orientation = quat;
-        pose_stamped.pose.position.y = 12.0; // desired x-coord is 6.5
-        goal.path.poses.push_back(pose_stamped);
-
-        quat = convertPlanarPhi2Quaternion(3.14159);
-        pose_stamped.pose.orientation = quat;
-        pose_stamped.pose.position.x = 0; // desired x-coord is 6.5
+        pose_stamped.pose.position.y = 3.0; // desired y-coord is 2.0
         goal.path.poses.push_back(pose_stamped);
         
         action_client.sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
         
+        // save number of poses sent
+        int npts = goal.path.poses.size();
+        bool goal_cancelled = false;
+        my_path_action_server::path_messageGoal newGoal;
+        
+        // while the path is in progress, check for LIDAR alarm
+        while (g_fdbk < npts) {
+            if (g_lidar_alarm) { //see if user wants to cancel current goal
+                ROS_INFO("LIDAR ALARM: cancelling goal");
+                action_client.cancelGoal(); //this is how one can cancel a goal in process
+                goal_cancelled = true;
+            }
+            if (!g_lidar_alarm && goal_cancelled) {
+                action_client.sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
+            }
+        }
         
     return 0;
 }

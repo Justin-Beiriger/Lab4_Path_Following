@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>my_path_action_server2</name>
+  <name>my_action_server2</name>
   <version>0.0.0</version>
-  <description>The my_path_action_server2 package</description>
+  <description>The my_action_server2 package</description>
   
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

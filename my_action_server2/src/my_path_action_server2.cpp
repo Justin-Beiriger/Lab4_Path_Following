@@ -235,6 +235,16 @@ void MyPathActionServer::executeCB(const actionlib::SimpleActionServer<my_path_a
     ROS_INFO("received path request with %d poses",npts);
     
     for (int i=g_start;i<npts;i++) { //visit each subgoal
+        
+        // if goal is cancelled, halt the robot and send the current path progress to the client
+        if (as_.isPreemptRequested()){	
+          ROS_WARN("goal cancelled! Stopping.");
+          do_halt();
+          result_.output = i;
+          as_.setAborted(result_); // tell the client we have given up on this goal; send the result message as well
+          return; // done with callback
+ 	}
+        
         // odd notation: drill down, access vector element, drill some more to get pose
         pose_desired = goal->path.poses[i].pose; //get next pose from vector of poses
         
