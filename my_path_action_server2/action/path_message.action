@@ -1,0 +1,8 @@
+#goal
+nav_msgs/Path path
+---
+#result
+int32 output
+---
+#feedback
+int32 path_progress
