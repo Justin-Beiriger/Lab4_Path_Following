@@ -108,26 +108,36 @@ int main(int argc, char** argv) {
         
         action_client.sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
         
-        // save number of poses sent
-        int npts = goal.path.poses.size();
-        bool goal_cancelled = false;
-        my_action_server2::path_messageGoal newGoal;
+        while(ros::ok()) {
+			
+			// save number of poses sent
+			int npts = goal.path.poses.size();
+			bool goal_cancelled = false;
+			my_action_server2::path_messageGoal newGoal;
+			
+			// while the path is in progress, check for LIDAR alarm
+			while (!g_lidar_alarm) {
+				ros::spinOnce(); //allow data update from callback 
+				ros::spinOnce(); //allow data update from callback 
+				ros::spinOnce(); //allow data update from callback 
+
+				ROS_INFO("alarm var = %d", g_lidar_alarm);
+				ROS_INFO("goal still valid");
+			}
+			ROS_INFO("LIDAR ALARM: cancelled goal");
+			action_client.cancelGoal(); //this is how one can cancel a goal in process
+			goal_cancelled = true;
+			
+			while (g_lidar_alarm) {
+				ros::spinOnce(); //allow data update from callback 
+				ros::spinOnce(); //allow data update from callback 
+				ros::spinOnce(); //allow data update from callback 
+				ROS_INFO("ALARM ACTIVE");
+			}
+			action_client.sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
+		}
         
-        // while the path is in progress, check for LIDAR alarm
-        while (!g_lidar_alarm) {
-			ROS_INFO("alarm var = %d", g_lidar_alarm);
-			ROS_INFO("goal still valid");
-			main_timer.sleep();
-		}
-		ROS_INFO("LIDAR ALARM: cancelled goal");
-        action_client.cancelGoal(); //this is how one can cancel a goal in process
-        goal_cancelled = true;
-		
-		while (g_lidar_alarm) {
-			ROS_INFO("ALARM ACTIVE");
-			main_timer.sleep();
-		}
-		action_client.sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
+        
 		
         
     return 0;

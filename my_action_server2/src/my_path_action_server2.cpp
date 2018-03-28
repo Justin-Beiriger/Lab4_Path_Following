@@ -162,6 +162,14 @@ void MyPathActionServer::do_move(double distance) { // always assumes robot is a
           g_twist_commander.publish(g_twist_cmd);
           timer+=g_sample_dt;
           loop_timer.sleep(); 
+          
+          // if goal is cancelled, halt the robot and send the current path progress to the client
+          if (as_.isPreemptRequested()){	
+			ROS_WARN("goal cancelled! Stopping.");
+			do_halt();
+			return; // done with callback
+		  }
+          
     }  
     do_halt(); // halt after movement is complete
 }
@@ -236,14 +244,6 @@ void MyPathActionServer::executeCB(const actionlib::SimpleActionServer<my_action
     
     for (int i=g_start;i<npts;i++) { //visit each subgoal
         
-        // if goal is cancelled, halt the robot and send the current path progress to the client
-        if (as_.isPreemptRequested()){	
-          ROS_WARN("goal cancelled! Stopping.");
-          do_halt();
-          result_.output = i;
-          as_.setAborted(result_); // tell the client we have given up on this goal; send the result message as well
-          return; // done with callback
- 	}
         
         // odd notation: drill down, access vector element, drill some more to get pose
         pose_desired = goal->path.poses[i].pose; //get next pose from vector of poses
